@@ -1,37 +1,43 @@
-/* styles.css */
-
-/* Reset */
-* {
-  box-sizing: border-box;
-}
+/* Shared styles for all pages */
 
 body {
   margin: 0;
+  font-family: Arial, sans-serif;
   background: #0f111a;
   color: #ddd;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  overflow-y: hidden;
 }
 
 .container {
-  flex-grow: 1;
   max-width: 800px;
-  margin: 20px auto;
-  padding: 20px;
+  margin: 30px auto;
   background: #1a1c2b;
+  padding: 20px;
   border-radius: 10px;
   box-shadow: 0 0 10px #141627;
+  flex-grow: 1;
   overflow-y: auto;
-  height: calc(100vh - 160px);
 }
 
-/* Chat messages */
+nav a.btn {
+  background: #4a90e2;
+  color: white;
+  padding: 12px 30px;
+  margin: 10px;
+  display: inline-block;
+  border-radius: 30px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+}
 
+nav a.btn:hover {
+  background: #3571c6;
+}
+
+/* Chat message styles */
 .message {
   max-width: 80%;
   margin-bottom: 16px;
@@ -57,8 +63,6 @@ body {
   margin-right: auto;
   border-bottom-left-radius: 4px;
 }
-
-/* Typing bubbles */
 
 .typing {
   display: flex;
@@ -93,8 +97,6 @@ body {
     opacity: 1;
   }
 }
-
-/* Input area */
 
 #input-area {
   display: flex;
@@ -143,8 +145,6 @@ button:hover:not(:disabled) {
   background: #3a78d6;
 }
 
-/* Code blocks styling */
-
 pre {
   background: #1e1e2f;
   color: #dcdcdc;
@@ -157,8 +157,6 @@ pre {
   margin-top: 12px;
   margin-bottom: 12px;
 }
-
-/* Copy button inside pre */
 
 .copy-btn {
   position: absolute;
@@ -180,8 +178,6 @@ pre {
   opacity: 1;
 }
 
-/* Image output styling */
-
 #image-output img {
   max-width: 100%;
   border-radius: 15px;
@@ -189,23 +185,6 @@ pre {
   display: block;
   margin: 20px auto;
 }
-
-/* Scrollbar styling for chat and image containers */
-
-.container::-webkit-scrollbar {
-  width: 8px;
-}
-
-.container::-webkit-scrollbar-track {
-  background: #12141f;
-}
-
-.container::-webkit-scrollbar-thumb {
-  background: #4a90e2aa;
-  border-radius: 10px;
-}
-
-/* Responsive */
 
 @media (max-width: 600px) {
   .container, #input-area {
