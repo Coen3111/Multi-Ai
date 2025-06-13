@@ -1,198 +1,82 @@
-/* Shared styles for all pages */
-
 body {
+  font-family: 'Segoe UI', sans-serif;
   margin: 0;
-  font-family: Arial, sans-serif;
-  background: #0f111a;
-  color: #ddd;
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
+  background: #f0f2f5;
+  color: #333;
 }
 
-.container {
-  max-width: 800px;
-  margin: 30px auto;
-  background: #1a1c2b;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 0 10px #141627;
-  flex-grow: 1;
-  overflow-y: auto;
-}
-
-nav a.btn {
-  background: #4a90e2;
+.navbar {
+  background: #1a1a2e;
   color: white;
-  padding: 12px 30px;
-  margin: 10px;
-  display: inline-block;
-  border-radius: 30px;
-  text-decoration: none;
-  font-weight: 600;
-  transition: background-color 0.3s ease;
-}
-
-nav a.btn:hover {
-  background: #3571c6;
-}
-
-/* Chat message styles */
-.message {
-  max-width: 80%;
-  margin-bottom: 16px;
-  padding: 12px 16px;
-  border-radius: 15px;
-  line-height: 1.4;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  font-size: 1rem;
-  position: relative;
-}
-
-.user-msg {
-  background: #4a90e2;
-  color: #fff;
-  margin-left: auto;
-  border-bottom-right-radius: 4px;
-}
-
-.ai-msg {
-  background: #272b40;
-  color: #ccc;
-  margin-right: auto;
-  border-bottom-left-radius: 4px;
-}
-
-.typing {
+  padding: 1em;
   display: flex;
-  gap: 6px;
+  justify-content: space-between;
   align-items: center;
-  height: 20px;
-  margin-bottom: 16px;
 }
 
-.typing span {
-  display: block;
-  width: 6px;
-  height: 6px;
-  background: #999;
-  border-radius: 50%;
-  animation: blink 1.2s infinite;
-}
-
-.typing span:nth-child(2) {
-  animation-delay: 0.2s;
-}
-
-.typing span:nth-child(3) {
-  animation-delay: 0.4s;
-}
-
-@keyframes blink {
-  0%, 80%, 100% {
-    opacity: 0.3;
-  }
-  40% {
-    opacity: 1;
-  }
-}
-
-#input-area {
+.navbar ul {
+  list-style: none;
   display: flex;
+  gap: 1em;
+}
+
+.navbar a {
+  color: white;
+  text-decoration: none;
+}
+
+.container, .chat-container {
+  padding: 2em;
   max-width: 800px;
-  margin: 10px auto 30px auto;
-  padding: 0 20px;
-  gap: 10px;
+  margin: auto;
 }
 
-#user-input, #image-prompt {
-  flex-grow: 1;
-  padding: 12px 16px;
-  border-radius: 30px;
-  border: none;
-  font-size: 1rem;
-  background: #272b40;
-  color: #eee;
-  outline-offset: 2px;
-  outline-color: #4a90e2;
-  transition: outline-color 0.3s ease;
+.btn-group {
+  display: flex;
+  gap: 1em;
+  margin-top: 1em;
 }
 
-#user-input:focus, #image-prompt:focus {
-  outline-color: #6ea0f8;
-}
-
-button {
-  background: #4a90e2;
+.btn {
+  padding: 1em;
+  background: #007bff;
   color: white;
-  font-weight: 600;
-  border: none;
-  border-radius: 30px;
-  padding: 0 20px;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: background-color 0.3s ease;
-  min-width: 80px;
+  text-decoration: none;
+  border-radius: 0.5em;
 }
 
-button:disabled {
-  background: #888;
-  cursor: not-allowed;
+#chat-box {
+  background: white;
+  padding: 1em;
+  height: 400px;
+  overflow-y: scroll;
+  border: 1px solid #ccc;
+  margin-bottom: 1em;
+  border-radius: 10px;
 }
 
-button:hover:not(:disabled) {
-  background: #3a78d6;
+.chat-input {
+  display: flex;
+  gap: 1em;
 }
 
-pre {
-  background: #1e1e2f;
-  color: #dcdcdc;
-  padding: 16px 20px;
-  border-radius: 12px;
-  overflow-x: auto;
-  position: relative;
-  font-family: "Fira Mono", monospace, monospace;
-  font-size: 0.9rem;
-  margin-top: 12px;
-  margin-bottom: 12px;
+.chat-input input {
+  flex: 1;
+  padding: 0.75em;
+  border: 1px solid #ccc;
+  border-radius: 0.5em;
 }
 
-.copy-btn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: #4a90e2;
+.chat-input button {
+  padding: 0.75em 1.5em;
+  background: #28a745;
   color: white;
   border: none;
-  padding: 4px 10px;
-  border-radius: 15px;
-  font-size: 0.75rem;
-  cursor: pointer;
-  opacity: 0.7;
-  transition: opacity 0.2s ease;
-  z-index: 10;
-}
-
-.copy-btn:hover {
-  opacity: 1;
+  border-radius: 0.5em;
 }
 
 #image-output img {
   max-width: 100%;
-  border-radius: 15px;
-  box-shadow: 0 0 15px #4a90e2aa;
-  display: block;
-  margin: 20px auto;
-}
-
-@media (max-width: 600px) {
-  .container, #input-area {
-    max-width: 95vw;
-    padding: 10px;
-  }
-
-  .message {
-    max-width: 100%;
-  }
+  margin-top: 1em;
+  border-radius: 10px;
 }
