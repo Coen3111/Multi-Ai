@@ -1,26 +1,28 @@
-<!-- chat.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>ChatAI - AIVerse</title>
-  <link rel="stylesheet" href="style.css">
-  <script defer src="script.js"></script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Groq AI Chat</title>
+<link rel="stylesheet" href="styles.css" />
 </head>
-<body class="chat-page">
-  <header>
-    <h1>💬 ChatAI</h1>
-    <a href="index.html" class="back">← Back to Menu</a>
-  </header>
-  <main>
-    <div id="chat-window"></div>
-    <div id="typing-indicator" class="hidden">
-      <span></span><span></span><span></span>
-    </div>
-    <form id="chat-form">
-      <input type="text" id="user-input" placeholder="Type your message..." autocomplete="off" required />
-      <button type="submit">Send</button>
-    </form>
-  </main>
+<body>
+
+<header>Groq AI Chat</header>
+
+<nav>
+  <a href="index.html" class="nav-link">Home</a> |
+  <a href="chat.html" class="nav-link">Chat AI</a> |
+  <a href="image.html" class="nav-link">Image Generator</a>
+</nav>
+
+<div id="chat-container"></div>
+
+<div id="input-area">
+  <input id="user-input" placeholder="Ask me anything..." autocomplete="off" />
+  <button id="send-btn" disabled>Send</button>
+</div>
+
+<script src="chat.js" defer></script>
 </body>
 </html>
