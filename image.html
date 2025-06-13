@@ -1,24 +1,126 @@
-<!-- image.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>ImageAI - AIVerse</title>
-  <link rel="stylesheet" href="style.css">
-  <script defer src="script.js"></script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Image Generator - Multi AI Site</title>
+<style>
+  body {
+    background: #121212;
+    color: #eee;
+    font-family: Arial, sans-serif;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  h1 {
+    margin-bottom: 1rem;
+  }
+  input, button {
+    font-size: 1rem;
+    padding: 0.5rem;
+    margin: 0.5rem 0;
+    width: 300px;
+    border-radius: 6px;
+    border: none;
+  }
+  button {
+    background: #0f62fe;
+    color: white;
+    cursor: pointer;
+  }
+  #loading {
+    font-style: italic;
+    margin-top: 1rem;
+  }
+  #output-image {
+    margin-top: 1rem;
+    max-width: 500px;
+    border-radius: 12px;
+    box-shadow: 0 0 10px #0f62fe;
+    display: none;
+  }
+  nav {
+    margin-bottom: 2rem;
+  }
+  nav a {
+    color: #0f62fe;
+    text-decoration: none;
+    margin: 0 1rem;
+    font-weight: bold;
+  }
+  nav a:hover {
+    text-decoration: underline;
+  }
+</style>
 </head>
-<body class="image-page">
-  <header>
-    <h1>🎨 ImageAI</h1>
-    <a href="index.html" class="back">← Back to Menu</a>
-  </header>
-  <main>
-    <form id="image-form">
-      <input type="text" id="prompt" placeholder="Enter your prompt..." required>
-      <input type="text" id="image-url" placeholder="Image URL..." required>
-      <button type="submit">Generate</button>
-    </form>
-    <div id="result-container"></div>
-  </main>
+<body>
+
+<nav>
+  <a href="chat.html">Chat AI</a> |
+  <a href="image.html">Image Generator</a>
+</nav>
+
+<h1>Stability AI Image Generator (Test Only)</h1>
+
+<input id="image-prompt" type="text" placeholder="Enter image prompt" />
+<button id="generate-btn">Generate Image</button>
+
+<div id="loading" style="display:none;">Generating image...</div>
+<img id="output-image" alt="Generated AI image" />
+
+<script>
+const stabilityApiKey = "sk-6Z6ShyGx2P9rPz5grcK4ynz9jchpYm2BfTbo8rSCOgKEHoBP";
+const stabilityApiUrl = "https://api.stability.ai/v2beta/stable-image/generate/sd3";
+
+async function generateImageStability(prompt) {
+  // Build FormData
+  const formData = new FormData();
+  formData.append("prompt", prompt);
+  formData.append("output_format", "jpeg");
+
+  const response = await fetch(stabilityApiUrl, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${stabilityApiKey}`,
+      Accept: "image/*"
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`HTTP ${response.status}: ${errText}`);
+  }
+
+  const blob = await response.blob();
+  return URL.createObjectURL(blob);
+}
+
+document.getElementById("generate-btn").onclick = async () => {
+  const promptInput = document.getElementById("image-prompt");
+  const loadingText = document.getElementById("loading");
+  const outputImg = document.getElementById("output-image");
+  const prompt = promptInput.value.trim();
+  if (!prompt) {
+    alert("Please enter a prompt.");
+    return;
+  }
+  loadingText.style.display = "block";
+  outputImg.style.display = "none";
+
+  try {
+    const imageUrl = await generateImageStability(prompt);
+    outputImg.src = imageUrl;
+    outputImg.style.display = "block";
+  } catch (err) {
+    alert("Error generating image: " + err.message);
+  } finally {
+    loadingText.style.display = "none";
+  }
+};
+</script>
+
 </body>
 </html>
