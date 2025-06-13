@@ -1,5 +1,6 @@
-/* General reset & base */
+/* styles.css */
 
+/* Reset */
 * {
   box-sizing: border-box;
 }
@@ -14,22 +15,22 @@ body {
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-y: hidden;
 }
 
-/* Container for chat or image */
-
-#chat-container, #image-output {
+.container {
   flex-grow: 1;
-  overflow-y: auto;
-  padding: 20px;
   max-width: 800px;
-  margin: 0 auto;
-  border-radius: 10px;
+  margin: 20px auto;
+  padding: 20px;
   background: #1a1c2b;
+  border-radius: 10px;
   box-shadow: 0 0 10px #141627;
+  overflow-y: auto;
+  height: calc(100vh - 160px);
 }
 
-/* Messages */
+/* Chat messages */
 
 .message {
   max-width: 80%;
@@ -64,6 +65,7 @@ body {
   gap: 6px;
   align-items: center;
   height: 20px;
+  margin-bottom: 16px;
 }
 
 .typing span {
@@ -190,18 +192,15 @@ pre {
 
 /* Scrollbar styling for chat and image containers */
 
-#chat-container::-webkit-scrollbar,
-#image-output::-webkit-scrollbar {
+.container::-webkit-scrollbar {
   width: 8px;
 }
 
-#chat-container::-webkit-scrollbar-track,
-#image-output::-webkit-scrollbar-track {
+.container::-webkit-scrollbar-track {
   background: #12141f;
 }
 
-#chat-container::-webkit-scrollbar-thumb,
-#image-output::-webkit-scrollbar-thumb {
+.container::-webkit-scrollbar-thumb {
   background: #4a90e2aa;
   border-radius: 10px;
 }
@@ -209,7 +208,7 @@ pre {
 /* Responsive */
 
 @media (max-width: 600px) {
-  #chat-container, #image-output, #input-area {
+  .container, #input-area {
     max-width: 95vw;
     padding: 10px;
   }
