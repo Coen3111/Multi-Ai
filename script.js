@@ -1,175 +1,167 @@
-// ====== Chat AI Logic ======
+const apiKey = "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";
+const model = "llama-3.3-70b-versatile";
 
-const chatApiKey = "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";
-const chatModel = "llama-3.3-70b-versatile";
+document.addEventListener("DOMContentLoaded", () => {
+  const chatContainer = document.getElementById("chat-container");
+  const imageOutput = document.getElementById("image-output");
+  const userInput = document.getElementById("user-input");
+  const imagePrompt = document.getElementById("image-prompt");
+  const inputArea = document.getElementById("input-area");
+  const sendBtn = document.getElementById("send-btn");
+  const generateBtn = document.getElementById("generate-btn");
 
-const chatContainer = document.getElementById("chat-container");
-const userInput = document.getElementById("user-input");
-const sendBtn = document.getElementById("send-btn");
+  if (chatContainer && userInput && sendBtn) {
+    // Chat page logic
+    inputArea.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const message = userInput.value.trim();
+      if (!message) return;
 
-if (userInput && sendBtn && chatContainer) {
-  // Enable send button only if input has content
-  userInput.addEventListener("input", () => {
-    sendBtn.disabled = userInput.value.trim().length === 0;
-  });
+      appendMessage(message, "user-msg");
+      userInput.value = "";
+      sendBtn.disabled = true;
 
-  sendBtn.addEventListener("click", async () => {
-    const question = userInput.value.trim();
-    if (!question) return;
+      appendTypingIndicator();
 
-    appendMessage(question, "user-msg");
-    userInput.value = "";
-    sendBtn.disabled = true;
+      try {
+        const aiResponse = await fetchAIResponse(message);
+        removeTypingIndicator();
+        appendMessage(aiResponse, "ai-msg");
+      } catch (err) {
+        removeTypingIndicator();
+        appendMessage("Error: Could not get response.", "ai-msg");
+      } finally {
+        sendBtn.disabled = false;
+        scrollToBottom(chatContainer);
+      }
+    });
 
-    const typingMessage = appendTyping();
+  } else if (imageOutput && imagePrompt && generateBtn) {
+    // Image page logic
+    inputArea.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const prompt = imagePrompt.value.trim();
+      if (!prompt) return;
 
-    try {
-      const aiResponse = await sendToGroqAPI(question);
-      removeTyping(typingMessage);
-      appendMessage(formatResponse(aiResponse), "ai-msg");
-      chatContainer.scrollTop = chatContainer.scrollHeight;
-    } catch (err) {
-      removeTyping(typingMessage);
-      appendMessage("Error: " + err.message, "ai-msg");
-    }
-  });
+      imagePrompt.value = "";
+      generateBtn.disabled = true;
+      imageOutput.innerHTML = `<p style="color:#ccc;">Generating image, please wait...</p>`;
 
-  // Append user or AI message
+      try {
+        const imageUrl = await fetchImage(prompt);
+        imageOutput.innerHTML = `<img src="${imageUrl}" alt="Generated image" />`;
+      } catch (err) {
+        imageOutput.innerHTML = `<p style="color:red;">Error generating image.</p>`;
+      } finally {
+        generateBtn.disabled = false;
+      }
+    });
+  }
+
   function appendMessage(text, className) {
     const div = document.createElement("div");
-    div.className = "message " + className;
-    if (className === "ai-msg") {
-      div.innerHTML = parseMarkdown(text);
+    div.className = `message ${className}`;
+
+    // Detect if text contains code block markdown
+    if (/```/.test(text)) {
+      const codeBlockMatch = text.match(/```(\w+)?\n([\s\S]*?)```/);
+      if (codeBlockMatch) {
+        const lang = codeBlockMatch[1] || "";
+        const code = codeBlockMatch[2];
+
+        const before = text.substring(0, codeBlockMatch.index).trim();
+        const after = text.substring(codeBlockMatch.index + codeBlockMatch[0].length).trim();
+
+        if (before) {
+          const pBefore = document.createElement("p");
+          pBefore.textContent = before;
+          div.appendChild(pBefore);
+        }
+
+        const pre = document.createElement("pre");
+        const codeEl = document.createElement("code");
+        codeEl.textContent = code;
+        pre.appendChild(codeEl);
+
+        // Copy button
+        const copyBtn = document.createElement("button");
+        copyBtn.className = "copy-btn";
+        copyBtn.textContent = "Copy";
+        copyBtn.onclick = () => {
+          navigator.clipboard.writeText(code).then(() => {
+            copyBtn.textContent = "Copied!";
+            setTimeout(() => (copyBtn.textContent = "Copy"), 2000);
+          });
+        };
+        pre.appendChild(copyBtn);
+
+        div.appendChild(pre);
+
+        if (after) {
+          const pAfter = document.createElement("p");
+          pAfter.textContent = after;
+          div.appendChild(pAfter);
+        }
+      } else {
+        div.textContent = text;
+      }
     } else {
       div.textContent = text;
     }
-    chatContainer.appendChild(div);
-    chatContainer.scrollTop = chatContainer.scrollHeight;
-    return div;
+
+    if (chatContainer) {
+      chatContainer.appendChild(div);
+      scrollToBottom(chatContainer);
+    }
   }
 
-  // Append typing indicator
-  function appendTyping() {
-    const div = document.createElement("div");
-    div.className = "message ai-msg";
-    div.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`;
-    chatContainer.appendChild(div);
-    chatContainer.scrollTop = chatContainer.scrollHeight;
-    return div;
+  function appendTypingIndicator() {
+    if (!chatContainer) return;
+    const typingDiv = document.createElement("div");
+    typingDiv.className = "message ai-msg typing";
+    typingDiv.id = "typing-indicator";
+
+    for (let i = 0; i < 3; i++) {
+      const dot = document.createElement("span");
+      typingDiv.appendChild(dot);
+    }
+    chatContainer.appendChild(typingDiv);
+    scrollToBottom(chatContainer);
   }
 
-  // Remove typing indicator
-  function removeTyping(typingNode) {
-    typingNode?.remove();
+  function removeTypingIndicator() {
+    const typingDiv = document.getElementById("typing-indicator");
+    if (typingDiv) typingDiv.remove();
   }
 
-  // Send question to Groq API
-  async function sendToGroqAPI(question) {
-    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+  function scrollToBottom(container) {
+    container.scrollTop = container.scrollHeight;
+  }
+
+  async function fetchAIResponse(message) {
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
+        "Authorization": `Bearer ${apiKey}`,
         "Content-Type": "application/json",
-        Authorization: `Bearer ${chatApiKey}`,
       },
       body: JSON.stringify({
-        model: chatModel,
-        messages: [{ role: "user", content: question }],
+        model,
+        messages: [
+          { role: "user", content: message }
+        ]
       }),
     });
 
-    if (!res.ok) {
-      throw new Error(`API error: ${res.status} ${await res.text()}`);
+    if (!response.ok) {
+      throw new Error("API error");
     }
-
-    const data = await res.json();
+    const data = await response.json();
     return data.choices?.[0]?.message?.content || "No response";
   }
 
-  // Parse markdown-like code blocks
-  function parseMarkdown(text) {
-    const codeBlockRegex = /```([\s\S]+?)```/g;
-
-    function escapeHtml(unsafe) {
-      return unsafe
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
-
-    let formatted = text.replace(codeBlockRegex, (_, code) => {
-      const escapedCode = escapeHtml(code.trim());
-      return `
-        <pre>
-          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          ${escapedCode}
-        </pre>
-      `;
-    });
-
-    // Escape other HTML chars outside pre tags
-    formatted = formatted.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    // Revert escaping inside <pre> blocks & buttons
-    formatted = formatted.replace(/&lt;pre&gt;/g, "<pre>").replace(/&lt;\/pre&gt;/g, "</pre>");
-    formatted = formatted.replace(/&lt;button/g, "<button").replace(/button&gt;/g, "button>");
-
-    return formatted;
+  async function fetchImage(prompt) {
+    // Placeholder: just return a random Unsplash image based on prompt
+    return `https://source.unsplash.com/600x400/?${encodeURIComponent(prompt)}`;
   }
-
-  // Copy code button handler
-  window.copyCode = function (button) {
-    const code = button.nextSibling.textContent;
-    navigator.clipboard.writeText(code).then(() => {
-      button.textContent = "Copied!";
-      setTimeout(() => (button.textContent = "Copy"), 1500);
-    });
-  };
-
-  userInput.focus();
-
-  userInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && !sendBtn.disabled) {
-      sendBtn.click();
-    }
-  });
-}
-
-// ====== Image Generator Logic ======
-
-const imageApiKey = "sk-6Z6ShyGx2P9rPz5grcK4ynz9jchpYm2BfTbo8rSCOgKEHoBP";
-
-const promptInput = document.getElementById("image-prompt");
-const generateBtn = document.getElementById("generate-btn");
-const outputDiv = document.getElementById("image-output");
-
-if (promptInput && generateBtn && outputDiv) {
-  promptInput.addEventListener("input", () => {
-    generateBtn.disabled = promptInput.value.trim().length === 0;
-  });
-
-  generateBtn.addEventListener("click", async () => {
-    const prompt = promptInput.value.trim();
-    if (!prompt) return;
-
-    generateBtn.disabled = true;
-    outputDiv.innerHTML = `<p style="color:#0f62fe;">Generating image, please wait...</p>`;
-
-    try {
-      // Fake delay & sample image for testing only:
-      await new Promise((r) => setTimeout(r, 2000));
-      // Normally you would do a fetch POST to your backend for the image generation here
-      // For example:
-      // const res = await fetch("YOUR_BACKEND_API_HERE", { ... });
-
-      // For demo: show a placeholder image from Unsplash
-      outputDiv.innerHTML = `
-        <img src="https://source.unsplash.com/600x400/?${encodeURIComponent(prompt)}" alt="Generated image" />
-      `;
-    } catch (err) {
-      outputDiv.innerHTML = `<p style="color:red;">Error generating image: ${err.message}</p>`;
-    } finally {
-      generateBtn.disabled = false;
-    }
-  });
-}
+});
