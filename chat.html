@@ -1,18 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>AI Chat</title>
-<link rel="stylesheet" href="styles.css" />
-<script src="app.js" defer></script>
+  <meta charset="UTF-8" />
+  <title>ChatSpace AI Chat</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="app.js" defer></script>
 </head>
 <body>
-  <div class="container" id="chat-container"></div>
-
-  <form id="input-area">
-    <input type="text" id="user-input" placeholder="Ask me anything..." autocomplete="off" />
-    <button type="submit" id="send-btn">Send</button>
-  </form>
+  <div class="page">
+    <nav class="navbar">
+      <h1>ChatSpace AI</h1>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="chat.html">AI Chat</a></li>
+        <li><a href="image.html">Image Generator</a></li>
+      </ul>
+    </nav>
+    <main class="chat-container">
+      <div id="chat-box"></div>
+      <div class="chat-input">
+        <input type="text" id="user-input" placeholder="Ask me anything..." />
+        <button onclick="sendChat()">Send</button>
+      </div>
+    </main>
+  </div>
 </body>
 </html>
