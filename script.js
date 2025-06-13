@@ -1,193 +1,175 @@
-// multi-ai.js
+// ====== Chat AI Logic ======
 
 const chatApiKey = "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";
-const chatApiUrl = "https://api.groq.com/openai/v1/chat/completions";
+const chatModel = "llama-3.3-70b-versatile";
 
-const stabilityApiKey = "sk-6Z6ShyGx2P9rPz5grcK4ynz9jchpYm2BfTbo8rSCOgKEHoBP";
-const stabilityApiUrl = "https://api.stability.ai/v2beta/stable-image/generate/sd3";
+const chatContainer = document.getElementById("chat-container");
+const userInput = document.getElementById("user-input");
+const sendBtn = document.getElementById("send-btn");
 
-// --- Chat page code ---
-async function sendChatMessage(message) {
-  const payload = {
-    model: "meta-llama/llama-4-scout-17b-16e-instruct",
-    messages: [
-      { role: "user", content: message }
-    ]
-  };
+if (userInput && sendBtn && chatContainer) {
+  // Enable send button only if input has content
+  userInput.addEventListener("input", () => {
+    sendBtn.disabled = userInput.value.trim().length === 0;
+  });
 
-  try {
-    const response = await fetch(chatApiUrl, {
+  sendBtn.addEventListener("click", async () => {
+    const question = userInput.value.trim();
+    if (!question) return;
+
+    appendMessage(question, "user-msg");
+    userInput.value = "";
+    sendBtn.disabled = true;
+
+    const typingMessage = appendTyping();
+
+    try {
+      const aiResponse = await sendToGroqAPI(question);
+      removeTyping(typingMessage);
+      appendMessage(formatResponse(aiResponse), "ai-msg");
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    } catch (err) {
+      removeTyping(typingMessage);
+      appendMessage("Error: " + err.message, "ai-msg");
+    }
+  });
+
+  // Append user or AI message
+  function appendMessage(text, className) {
+    const div = document.createElement("div");
+    div.className = "message " + className;
+    if (className === "ai-msg") {
+      div.innerHTML = parseMarkdown(text);
+    } else {
+      div.textContent = text;
+    }
+    chatContainer.appendChild(div);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+    return div;
+  }
+
+  // Append typing indicator
+  function appendTyping() {
+    const div = document.createElement("div");
+    div.className = "message ai-msg";
+    div.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`;
+    chatContainer.appendChild(div);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+    return div;
+  }
+
+  // Remove typing indicator
+  function removeTyping(typingNode) {
+    typingNode?.remove();
+  }
+
+  // Send question to Groq API
+  async function sendToGroqAPI(question) {
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${chatApiKey}`,
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        model: chatModel,
+        messages: [{ role: "user", content: question }],
+      }),
     });
 
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`HTTP ${response.status}: ${errText}`);
+    if (!res.ok) {
+      throw new Error(`API error: ${res.status} ${await res.text()}`);
     }
 
-    const data = await response.json();
-    // Assuming the completion text is here:
+    const data = await res.json();
     return data.choices?.[0]?.message?.content || "No response";
-  } catch (err) {
-    console.error("Chat API error:", err);
-    return `Error: ${err.message}`;
   }
-}
 
-// Helper: Wrap code blocks in styled box with copy button for chat messages containing code
-function formatChatResponse(text) {
-  // Basic simple markdown code block regex for ``` blocks
-  const codeBlockRegex = /```([\s\S]*?)```/g;
+  // Parse markdown-like code blocks
+  function parseMarkdown(text) {
+    const codeBlockRegex = /```([\s\S]+?)```/g;
 
-  // Replace code blocks with styled HTML + copy button
-  let formatted = text.replace(codeBlockRegex, (match, code) => {
-    const escapedCode = code
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
-    return `
-      <div class="code-block">
-        <pre><code>${escapedCode}</code></pre>
-        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-      </div>
-    `;
-  });
+    function escapeHtml(unsafe) {
+      return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
 
-  // Replace newlines with <br> for normal text lines outside code blocks
-  formatted = formatted.replace(/\n/g, "<br>");
-  return formatted;
-}
+    let formatted = text.replace(codeBlockRegex, (_, code) => {
+      const escapedCode = escapeHtml(code.trim());
+      return `
+        <pre>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          ${escapedCode}
+        </pre>
+      `;
+    });
 
-// Copy code button handler
-function copyCode(button) {
-  const code = button.previousElementSibling.textContent;
-  navigator.clipboard.writeText(code).then(() => {
-    button.textContent = "Copied!";
-    setTimeout(() => (button.textContent = "Copy"), 1500);
-  });
-}
+    // Escape other HTML chars outside pre tags
+    formatted = formatted.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    // Revert escaping inside <pre> blocks & buttons
+    formatted = formatted.replace(/&lt;pre&gt;/g, "<pre>").replace(/&lt;\/pre&gt;/g, "</pre>");
+    formatted = formatted.replace(/&lt;button/g, "<button").replace(/button&gt;/g, "button>");
 
-// --- Image generation page code ---
-async function generateImageStability(prompt) {
-  const payload = {
-    prompt,
-    output_format: "jpeg",
+    return formatted;
+  }
+
+  // Copy code button handler
+  window.copyCode = function (button) {
+    const code = button.nextSibling.textContent;
+    navigator.clipboard.writeText(code).then(() => {
+      button.textContent = "Copied!";
+      setTimeout(() => (button.textContent = "Copy"), 1500);
+    });
   };
 
-  function createFormData(obj) {
-    const formData = new FormData();
-    for (const key in obj) {
-      if (typeof obj[key] === "object") {
-        formData.append(key, JSON.stringify(obj[key]));
-      } else {
-        formData.append(key, obj[key]);
-      }
+  userInput.focus();
+
+  userInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !sendBtn.disabled) {
+      sendBtn.click();
     }
-    return formData;
-  }
+  });
+}
 
-  try {
-    const response = await fetch(stabilityApiUrl, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${stabilityApiKey}`,
-        Accept: "image/*",
-      },
-      body: createFormData(payload),
-    });
+// ====== Image Generator Logic ======
 
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`HTTP ${response.status}: ${errText}`);
+const imageApiKey = "sk-6Z6ShyGx2P9rPz5grcK4ynz9jchpYm2BfTbo8rSCOgKEHoBP";
+
+const promptInput = document.getElementById("image-prompt");
+const generateBtn = document.getElementById("generate-btn");
+const outputDiv = document.getElementById("image-output");
+
+if (promptInput && generateBtn && outputDiv) {
+  promptInput.addEventListener("input", () => {
+    generateBtn.disabled = promptInput.value.trim().length === 0;
+  });
+
+  generateBtn.addEventListener("click", async () => {
+    const prompt = promptInput.value.trim();
+    if (!prompt) return;
+
+    generateBtn.disabled = true;
+    outputDiv.innerHTML = `<p style="color:#0f62fe;">Generating image, please wait...</p>`;
+
+    try {
+      // Fake delay & sample image for testing only:
+      await new Promise((r) => setTimeout(r, 2000));
+      // Normally you would do a fetch POST to your backend for the image generation here
+      // For example:
+      // const res = await fetch("YOUR_BACKEND_API_HERE", { ... });
+
+      // For demo: show a placeholder image from Unsplash
+      outputDiv.innerHTML = `
+        <img src="https://source.unsplash.com/600x400/?${encodeURIComponent(prompt)}" alt="Generated image" />
+      `;
+    } catch (err) {
+      outputDiv.innerHTML = `<p style="color:red;">Error generating image: ${err.message}</p>`;
+    } finally {
+      generateBtn.disabled = false;
     }
-
-    const blob = await response.blob();
-    return URL.createObjectURL(blob);
-  } catch (err) {
-    console.error("Stability AI error:", err);
-    throw err;
-  }
-}
-
-// --- UI helpers ---
-
-// Show typing bubbles in chat while waiting for response
-function showTypingBubbles(container) {
-  const bubble = document.createElement("div");
-  bubble.className = "typing-bubbles";
-  bubble.innerHTML = `<span></span><span></span><span></span>`;
-  container.appendChild(bubble);
-  return bubble;
-}
-
-function removeTypingBubbles(bubble) {
-  bubble?.remove();
-}
-
-// --- Exported functions for your HTML ---
-
-// For chat page: handle send button click
-async function handleSendChat() {
-  const input = document.getElementById("chat-input");
-  const messagesContainer = document.getElementById("chat-messages");
-  const message = input.value.trim();
-  if (!message) return;
-
-  // Add user message to chat
-  const userMsgEl = document.createElement("div");
-  userMsgEl.className = "chat-message user";
-  userMsgEl.textContent = message;
-  messagesContainer.appendChild(userMsgEl);
-
-  input.value = "";
-  messagesContainer.scrollTop = messagesContainer.scrollHeight;
-
-  // Show typing bubbles
-  const typing = showTypingBubbles(messagesContainer);
-
-  // Get AI response
-  const response = await sendChatMessage(message);
-
-  // Remove typing bubbles
-  removeTypingBubbles(typing);
-
-  // Format response with code blocks
-  const formatted = formatChatResponse(response);
-
-  // Add AI message
-  const aiMsgEl = document.createElement("div");
-  aiMsgEl.className = "chat-message ai";
-  aiMsgEl.innerHTML = formatted;
-  messagesContainer.appendChild(aiMsgEl);
-  messagesContainer.scrollTop = messagesContainer.scrollHeight;
-}
-
-// For image page: handle generate button click
-async function handleGenerateImage() {
-  const promptInput = document.getElementById("image-prompt");
-  const loadingText = document.getElementById("loading");
-  const outputImg = document.getElementById("output-image");
-  const prompt = promptInput.value.trim();
-  if (!prompt) {
-    alert("Please enter a prompt.");
-    return;
-  }
-
-  loadingText.style.display = "block";
-  outputImg.style.display = "none";
-
-  try {
-    const imageUrl = await generateImageStability(prompt);
-    outputImg.src = imageUrl;
-    outputImg.style.display = "block";
-  } catch (err) {
-    alert("Error generating image: " + err.message);
-  } finally {
-    loadingText.style.display = "none";
-  }
+  });
 }
